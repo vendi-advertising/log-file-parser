@@ -11,7 +11,9 @@ return PhpCsFixer\Config::create()
         '@PSR2' => true,
         'array_syntax' => ['syntax' => 'short'],
         'cast_spaces' => ['space' => 'single'],
-        'class_keyword_remove' => true,
+
+        //We have a static::class and this break it
+        // 'class_keyword_remove' => true,
         'declare_strict_types' => true,
         'lowercase_cast' => true,
         'mb_str_functions' => true,

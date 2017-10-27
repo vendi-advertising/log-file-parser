@@ -1,8 +1,10 @@
 <?php declare(strict_types=1);
 namespace Vendi\LogParser;
 
+use League\Csv\Writer;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Webmozart\PathUtil\Path;
@@ -14,14 +16,12 @@ class parser_command extends Command
         $this
             ->setName('parser')
             ->setDescription('Parse a log file into CSV')
+            ->addOption('file', null, InputOption::VALUE_REQUIRED, 'What file would you like to parse?')
         ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-
-        //(?<domain>[^\s]+) (?<client_ip>[\d\.]+) \- (?<remote_user>[^\s]+) \[(?<datetime>.*?)\] "(?<method>GET|HEAD|POST) (?<path>.*?) (?<http_version>HTTP/[\d\.]+)" (?<http_status_code>\d+) (?<http_bytes>\d+) "(?<http_referer>[^"]+)" "(?<http_user_agent>[^"]+)" (?<tls_version>[^\s]+) (?<tls_cipher>[^\s]+) (?<connecting_ip>[\d\.]+)
-
         $io = new SymfonyStyle($input, $output);
         $io->write(sprintf("\033\143"));
         $io->title('Vendi Log File Parser');
@@ -32,11 +32,16 @@ class parser_command extends Command
                     ]
             );
 
-        $file_path = null;
-        while (null === $file_path || ! is_file($file_path)) {
+        $file_path = $input->getOption('file');
+        if ($file_path) {
+            $file_path = Path::makeAbsolute($file_path, VENDI_LOG_FILE_PARSER_PATH);
+        }
+        while (! $file_path || ! is_file($file_path)) {
             $file_path = $io->ask('What file would you like to parse?');
             $file_path = Path::makeAbsolute($file_path, VENDI_LOG_FILE_PARSER_PATH);
         }
+
+
 
         $handle = fopen($file_path, 'r');
         if (!$handle) {
@@ -44,8 +49,22 @@ class parser_command extends Command
             return 1;
         }
 
-        while (($line = fgets($handle)) !== false) {
-            // process the line read.
+        $writer = Writer::createFromPath($file_path . '.csv', 'w+');
+        $headers_written = false;
+        while (true) {
+            $line = fgets($handle);
+            if (false===$line) {
+                break;
+            }
+            $data = line_data::from_string($line);
+            if (!$data) {
+                continue;
+            }
+            if (!$headers_written) {
+                $writer->insertOne(array_keys($data));
+                $headers_written = true;
+            }
+            $writer->insertOne($data);
         }
 
         fclose($handle);
