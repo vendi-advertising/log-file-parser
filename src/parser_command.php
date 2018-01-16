@@ -61,7 +61,7 @@ class parser_command extends Command
                 continue;
             }
 
-            if('GET'!==$data['http_method']){
+            if ('GET'!==$data['http_method']) {
                 continue;
             }
 
@@ -73,14 +73,14 @@ class parser_command extends Command
                         ];
 
             $skip = false;
-            foreach($skip_paths as $path){
-                if(0===strpos($data['http_request'], $path)){
+            foreach ($skip_paths as $path) {
+                if (0===mb_strpos($data['http_request'], $path)) {
                     $skip = true;
                     break;
                 }
             }
 
-            if($skip){
+            if ($skip) {
                 continue;
             }
 
@@ -89,14 +89,14 @@ class parser_command extends Command
             ];
 
             $skip = true;
-            foreach($only_paths_parts as $part){
-                if(false !== strpos($data['http_request'], $part)){
+            foreach ($only_paths_parts as $part) {
+                if (false !== mb_strpos($data['http_request'], $part)) {
                     $skip = false;
                     break;
                 }
             }
 
-            if($skip){
+            if ($skip) {
                 continue;
             }
 

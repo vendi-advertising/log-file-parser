@@ -98,7 +98,7 @@ final class line_data
         foreach ($vars as $var) {
             if ('datetime'===$var) {
                 $ret[ $var ] = date('Y-m-d H:i:s', strtotime($matches[ $var ]));
-            } elseif(0 === strpos($var, 'detected_')){
+            } elseif (0 === mb_strpos($var, 'detected_')) {
                 continue;
             } else {
                 $ret[ $var ] = $matches[ $var ];
