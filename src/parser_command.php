@@ -60,6 +60,46 @@ class parser_command extends Command
             if (!$data) {
                 continue;
             }
+
+            if('GET'!==$data['http_method']){
+                continue;
+            }
+
+            $skip_paths = [
+                            '/wp-content/plugins/',
+                            '/wp-json/',
+                            '/wp-login.php',
+                            '/wp-includes/',
+                        ];
+
+            $skip = false;
+            foreach($skip_paths as $path){
+                if(0===strpos($data['http_request'], $path)){
+                    $skip = true;
+                    break;
+                }
+            }
+
+            if($skip){
+                continue;
+            }
+
+            $only_paths_parts = [
+                            'utm_source'
+            ];
+
+            $skip = true;
+            foreach($only_paths_parts as $part){
+                if(false !== strpos($data['http_request'], $part)){
+                    $skip = false;
+                    break;
+                }
+            }
+
+            if($skip){
+                continue;
+            }
+
             if (!$headers_written) {
                 $writer->insertOne(array_keys($data));
                 $headers_written = true;

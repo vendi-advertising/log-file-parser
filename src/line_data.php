@@ -36,6 +36,12 @@ final class line_data
 
     public $connecting_ip;
 
+    public $detected_platform;
+
+    public $detected_browser;
+
+    public $detected_version;
+
     public static function from_string(string $data) : ?array
     {
         //Declare these static so that we only init them once
@@ -92,10 +98,17 @@ final class line_data
         foreach ($vars as $var) {
             if ('datetime'===$var) {
                 $ret[ $var ] = date('Y-m-d H:i:s', strtotime($matches[ $var ]));
+            } elseif(0 === strpos($var, 'detected_')){
+                continue;
             } else {
                 $ret[ $var ] = $matches[ $var ];
             }
         }
+
+        $detected = parse_user_agent($ret['http_user_agent']);
+        $ret['detected_platform'] = $detected['platform'];
+        $ret['detected_browser']  = $detected['browser'];
+        $ret['detected_version']  = $detected['version'];
 
         return $ret;
     }
