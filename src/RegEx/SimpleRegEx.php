@@ -6,6 +6,7 @@ final class SimpleRegEx extends AbstractRegEx
     private $_pattern;
     private $_wrap_left;
     private $_wrap_right;
+    private $_is_optional = false;
 
     protected function __construct(string $name, string $pattern, string $wrap_left = '', string $wrap_right = '')
     {
@@ -28,6 +29,23 @@ final class SimpleRegEx extends AbstractRegEx
     public static function create_quote_wrapped(string $name, string $pattern)
     {
         return new self($name, $pattern, '"', '"');
+    }
+
+    public function with_optional_set(bool $value = true) : self
+    {
+        $ret = clone $this;
+        $ret->set_optional($value);
+        return $ret;
+    }
+
+    public function set_optional(bool $value = true)
+    {
+        $this->_is_optional = $value;
+    }
+
+    public function is_optional() : bool
+    {
+        return $this->_is_optional;
     }
 
     public function get_pattern() : string
@@ -53,12 +71,24 @@ final class SimpleRegEx extends AbstractRegEx
         $wrap_right = $this->get_wrap_right();
 
         $ret = preg_quote($wrap_left, '/');
+
+        //Append a named capture group
         if ($name) {
             $ret .= "(?<$name>";
+
+            //Or, if we have an optional param, group it but create non-capturing
+        } elseif ($this->is_optional()) {
+            $ret .= '(?:';
         }
+
         $ret .= $pattern;
-        if ($name) {
+
+        //If we have a name or non-capturing group, close the parens
+        if ($name || $this->is_optional()) {
             $ret .= ')';
+        }
+        if ($this->is_optional()) {
+            $ret .= '?';
         }
         $ret .= preg_quote($wrap_right, '/');
         return $ret;

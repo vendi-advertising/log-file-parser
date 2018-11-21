@@ -3,7 +3,7 @@ namespace Vendi\LogParser\RegEx;
 
 abstract class AbstractRegEx
 {
-    public const IP_SIMPLE = '[\d\.]+';
+    public const IP_SIMPLE = '(?:[\d\.]+|\-)';
 
     public const NOT_SPACE = '[^\s]+';
 

@@ -1,4 +1,7 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
+
 namespace Vendi\LogParser;
 
 use League\Csv\Writer;
@@ -16,7 +19,7 @@ class parser_command extends Command
         $this
             ->setName('parser')
             ->setDescription('Parse a log file into CSV')
-            ->addOption('file', null, InputOption::VALUE_REQUIRED, 'What file would you like to parse?')
+            ->addOption('file',     null, InputOption::VALUE_REQUIRED, 'What file would you like to parse?')
         ;
     }
 
@@ -41,73 +44,9 @@ class parser_command extends Command
             $file_path = Path::makeAbsolute($file_path, VENDI_LOG_FILE_PARSER_PATH);
         }
 
-
-
-        $handle = fopen($file_path, 'r');
-        if (!$handle) {
-            $io->error('Could not open file, maybe check permissions?');
-            return 1;
-        }
-
-        $writer = Writer::createFromPath($file_path . '.csv', 'w+');
-        $headers_written = false;
-        while (true) {
-            $line = fgets($handle);
-            if (false===$line) {
-                break;
-            }
-            $data = line_data::from_string($line);
-            if (!$data) {
-                continue;
-            }
-
-            if ('GET'!==$data['http_method']) {
-                continue;
-            }
-
-            $skip_paths = [
-                            '/wp-content/plugins/',
-                            '/wp-json/',
-                            '/wp-login.php',
-                            '/wp-includes/',
-                        ];
-
-            $skip = false;
-            foreach ($skip_paths as $path) {
-                if (0===mb_strpos($data['http_request'], $path)) {
-                    $skip = true;
-                    break;
-                }
-            }
-
-            if ($skip) {
-                continue;
-            }
-
-            $only_paths_parts = [
-                            'utm_source'
-            ];
-
-            $skip = true;
-            foreach ($only_paths_parts as $part) {
-                if (false !== mb_strpos($data['http_request'], $part)) {
-                    $skip = false;
-                    break;
-                }
-            }
-
-            if ($skip) {
-                continue;
-            }
-
-            if (!$headers_written) {
-                $writer->insertOne(array_keys($data));
-                $headers_written = true;
-            }
-            $writer->insertOne($data);
-        }
-
-        fclose($handle);
+        $output_file_path = $file_path . '.csv';
+        $w = new worker();
+        $w->do_work($file_path, $output_file_path);
 
         $io->text('Well, that\'s about it!');
     }
